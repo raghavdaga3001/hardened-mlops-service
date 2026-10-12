@@ -1,0 +1,11 @@
+cat << 'EOF' > .gitignore
+.venv/
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+*.html
+.coverage
+build/
+dist/
+EOF

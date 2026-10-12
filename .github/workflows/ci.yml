@@ -1,0 +1,42 @@
+name: CI & Security Gates
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  test-and-scan:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: "pip"
+
+      - name: Install Dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install pytest httpx bandit
+
+      - name: Ensure Golden Baseline Artifacts Exist
+        run: |
+          if [ ! -f baseline/model.safetensors ] || [ ! -f baseline/baseline_data.parquet ]; then
+            echo "[*] Generating synthetic artifacts for CI environment..."
+            python scripts/train_and_export.py
+          fi
+
+      - name: Run Pytest Suite
+        run: |
+          pytest -v tests/
+
+      - name: Run Bandit AST Security Scan
+        run: |
+          bandit -r app/ -ll -ii
